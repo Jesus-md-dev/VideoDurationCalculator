@@ -1,8 +1,8 @@
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -10,18 +10,32 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import javax.swing.text.NumberFormatter;
 
-public class VideoDurationCalculator extends JFrame implements ActionListener{
+public class VideoDurationCalculator extends JFrame {
 
     private JFormattedTextField hour, min, sec;
     private JLabel result;
     JComboBox speedsSelection;
+    boolean boolTimer = false;
+    JButton calculate;
+    LocalTime timeVideo, timeResult, timeBackup;
+    Boolean backupSaved = false;
+    Timer timer = new Timer(1000, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e){
+            timeResult = timeResult.minusSeconds(1);
+            result.setText(timeVideo + " => " + timeResult);
+        }
+    });
 
-    public VideoDurationCalculator(){
+    public VideoDurationCalculator() {
 
         NumberFormatter numberFormatter = new NumberFormatter();
         numberFormatter.setValueClass(Long.class);
+        timeVideo = LocalTime.of(0, 0, 0);
+        timeResult = LocalTime.of(0, 0, 0);
 
         // TimePanel
         JPanel setTimePanel = new JPanel();
@@ -37,14 +51,75 @@ public class VideoDurationCalculator extends JFrame implements ActionListener{
         hour = new JFormattedTextField(numberFormatter);
         hour.setPreferredSize(new Dimension(50,20));
         hour.setText("0");
+        hour.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                actualizar();
+            }
+        });
 
         min = new JFormattedTextField(numberFormatter);
         min.setPreferredSize(new Dimension(50,20));
         min.setText("0");
+        min.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                actualizar();
+            }
+        });
 
         sec = new JFormattedTextField(numberFormatter);
         sec.setPreferredSize(new Dimension(50, 20));
         sec.setText("0");
+        sec.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                actualizar();
+            }
+        });
+
+        // SpeedPanel
+        JPanel setSpeedPanel = new JPanel();
+        setSpeedPanel.setBounds(0, 30, 420, 40);
+
+        String[] speeds = {"x1", "x1.25", "x1.5", "x1.75", "x2"};
+        speedsSelection = new JComboBox(speeds);
+
+        speedsSelection.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                actualizar();
+            }
+        });
+
+        calculate = new JButton("Start");
+        calculate.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (timer.isRunning()) {
+                    timer.stop();
+                    calculate.setText("Start");
+                    timeBackup = timeResult;
+                    backupSaved = true;
+                }
+                else {
+                    if(backupSaved)
+                        timeResult = timeBackup;
+                    else
+                        actualizar();
+                    timer.start();
+                    calculate.setText("Stop");
+                }
+            }
+        });
+
+        // ResultPanel
+        JPanel resultPanel = new JPanel();
+        resultPanel.setBounds(0, 70, 420, 40);
+
+        result = new JLabel(timeVideo + " => " + timeResult);
+
+        JPanel resultPanel2 = new JPanel();
 
         setTimePanel.add(title);
         setTimePanel.add(hour);
@@ -53,30 +128,10 @@ public class VideoDurationCalculator extends JFrame implements ActionListener{
         setTimePanel.add(m);
         setTimePanel.add(sec);
         setTimePanel.add(s);
-
-        // SpeedPanel
-        JPanel setSpeedPanel = new JPanel();
-        setSpeedPanel.setBounds(0, 30, 420, 40);
-
-        JButton calculate = new JButton("Calculate");
-        calculate.addActionListener(this);
-
-        String[] speeds = {"x1","x1.25", "x1.5" , "x2"};
-        speedsSelection = new JComboBox(speeds);
-
         setSpeedPanel.add(speedsSelection);
         setSpeedPanel.add(calculate);
-
-        // ResultPanel
-        JPanel resultPanel = new JPanel();
-        resultPanel.setBounds(0, 70, 420, 40);
-
-        result = new JLabel("0H 0m 0s => 0H 0m 0s");
-        
         resultPanel.add(result);
-
-        JPanel resultPanel2 = new JPanel();
-
+        
         setTitle("Video Duration Calculator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
@@ -89,6 +144,28 @@ public class VideoDurationCalculator extends JFrame implements ActionListener{
         add(resultPanel2);
     }
 
+    public void actualizar(){
+        String speed;
+        int h = Integer.parseInt(hour.getText());
+        int m = Integer.parseInt(min.getText());
+        int s = Integer.parseInt(sec.getText());
+        long seconds = h * 3600 + m * 60 + s;
+
+        backupSaved = false;
+
+        speed = String.valueOf(speedsSelection.getSelectedItem());
+        speed = speed.replace("x", "");
+
+        timeVideo = LocalTime.ofSecondOfDay(seconds);
+
+        seconds /= Double.parseDouble(speed);
+
+        timeResult = LocalTime.ofSecondOfDay(seconds);
+
+        result.setText(timeVideo + " => " + timeResult);
+    }
+
+    /*
     @Override
     public void actionPerformed(ActionEvent e) {
         int h, m, s, hMod, mMod, sMod;
@@ -97,16 +174,31 @@ public class VideoDurationCalculator extends JFrame implements ActionListener{
         String speed;
         h = 0; m = 0; s = 0; hMod = 0; mMod = 0; sMod = 0;
 
+        
+
         h = Integer.parseInt(hour.getText());
         m = Integer.parseInt(min.getText());
         s = Integer.parseInt(sec.getText());
 
         total = h * 3600 + m * 60 + s;
 
+        timeVideo = LocalTime.of(h, m, s);
+
         time = secondToTime((int)total);
         h = time[0];
         m = time[1];
         s = time[2];
+
+        if(boolTimer) {
+            calculate.setText("Stop");
+            timer.start();
+            boolTimer = !boolTimer;
+        }
+        else {
+            calculate.setText("Start");
+            boolTimer = !boolTimer;
+            timer.stop();
+        }
 
         if(total > 0){
             speed = String.valueOf(speedsSelection.getSelectedItem());
@@ -116,12 +208,17 @@ public class VideoDurationCalculator extends JFrame implements ActionListener{
             hMod = time[0];
             mMod = time[1];
             sMod = time[2];
+            timeResult = LocalTime.of(hMod, mMod, sMod);
         }
 
-        result.setText(h + "H " + m + "m " + s + "s => " + hMod + "H " + mMod + "m " + sMod + "s");
-    }
+        DateTimeFormatter hms = DateTimeFormatter.ofPattern("H:mm:ss");
+        timeVideo.format(hms);
+        timeResult.format(hms);
 
-    public int[] secondToTime(int seconds) {
+        
+    }
+    */
+    public static int[] secondToTime(int seconds) {
         int[] time = new int[3];
 
         time[0] = seconds / 3600;
@@ -131,7 +228,7 @@ public class VideoDurationCalculator extends JFrame implements ActionListener{
 
         return time;
     }
-    
+
     public static void main(String[] args){
         new VideoDurationCalculator();
     }
