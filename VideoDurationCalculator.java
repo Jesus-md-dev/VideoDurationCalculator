@@ -99,13 +99,9 @@ public class VideoDurationCalculator extends JFrame {
                 if (timer.isRunning()) {
                     timer.stop();
                     calculate.setText("Start");
-                    timeBackup = timeResult;
-                    backupSaved = true;
                 }
                 else {
-                    if(backupSaved)
-                        timeResult = timeBackup;
-                    else
+                    if(!backupSaved)
                         actualizar();
                     timer.start();
                     calculate.setText("Stop");
@@ -165,59 +161,6 @@ public class VideoDurationCalculator extends JFrame {
         result.setText(timeVideo + " => " + timeResult);
     }
 
-    /*
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        int h, m, s, hMod, mMod, sMod;
-        double total;
-        int[] time;
-        String speed;
-        h = 0; m = 0; s = 0; hMod = 0; mMod = 0; sMod = 0;
-
-        
-
-        h = Integer.parseInt(hour.getText());
-        m = Integer.parseInt(min.getText());
-        s = Integer.parseInt(sec.getText());
-
-        total = h * 3600 + m * 60 + s;
-
-        timeVideo = LocalTime.of(h, m, s);
-
-        time = secondToTime((int)total);
-        h = time[0];
-        m = time[1];
-        s = time[2];
-
-        if(boolTimer) {
-            calculate.setText("Stop");
-            timer.start();
-            boolTimer = !boolTimer;
-        }
-        else {
-            calculate.setText("Start");
-            boolTimer = !boolTimer;
-            timer.stop();
-        }
-
-        if(total > 0){
-            speed = String.valueOf(speedsSelection.getSelectedItem());
-            speed = speed.replace("x", "");
-            total /= Double.parseDouble(speed);
-            time = secondToTime((int)total);
-            hMod = time[0];
-            mMod = time[1];
-            sMod = time[2];
-            timeResult = LocalTime.of(hMod, mMod, sMod);
-        }
-
-        DateTimeFormatter hms = DateTimeFormatter.ofPattern("H:mm:ss");
-        timeVideo.format(hms);
-        timeResult.format(hms);
-
-        
-    }
-    */
     public static int[] secondToTime(int seconds) {
         int[] time = new int[3];
 
